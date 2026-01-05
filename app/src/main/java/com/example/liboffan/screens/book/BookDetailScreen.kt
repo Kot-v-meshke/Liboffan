@@ -1,5 +1,8 @@
 package com.example.liboffan.screens.book
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,13 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookDetailScreen(onBack: () -> Unit) {
@@ -78,62 +81,78 @@ fun BookDetailScreen(onBack: () -> Unit) {
     """.trimIndent()
 
     val scrollState = rememberScrollState()
-    val toolbarHeight = 60.dp
+    val toolbarHeight = 56.dp // ✅ Уменьшено с 60 до 56
     val coverHeightDp = 300.dp
 
     val density = LocalDensity.current
     val coverHeightPx = with(density) { coverHeightDp.toPx() }
-    val toolbarHeightPx = with(density) { toolbarHeight.toPx() }
-
     val scrolledY = scrollState.value.toFloat()
-    val coverAlpha = (1 - (scrolledY / (coverHeightPx * 0.7f))).coerceIn(0f, 1f)
-    val titleAlpha = (scrolledY / (coverHeightPx * 0.3f)).coerceIn(0f, 1f)
 
-    val isToolbarVisible = scrolledY > coverHeightPx - toolbarHeightPx
+    // Прогресс от 0 до 1 — когда обложка полностью ушла вверх
+    val progress = (scrolledY / coverHeightPx).coerceIn(0f, 1f)
+
+    // Альфа для обложки — плавно затемняется
+    val coverAlpha = (1f - progress * 0.7f).coerceIn(0f, 1f)
+
+    // Альфа для элементов в toolbar — появляются постепенно
+    val toolbarAlpha = progress.coerceIn(0f, 1f)
+
+    // Альфа для кнопок на обложке — исчезают постепенно
+    val coverButtonsAlpha = (1f - progress).coerceIn(0f, 1f)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            if (isToolbarVisible) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = title,
-                            color = Color.White,
-                            maxLines = 1,
-                            fontSize = 18.sp
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                contentDescription = "Назад",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { isLiked = !isLiked }) {
-                            Icon(
-                                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (isLiked) "Убрать лайк" else "Понравилось",
-                                tint = if (isLiked) Color.Red else Color.White
-                            )
-                        }
-                        IconButton(onClick = { /* поделиться */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Поделиться",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF7065AC)
+            TopAppBar(
+                title = {
+                    // Плавно появляющийся заголовок
+                    Text(
+                        text = title,
+                        color = Color.White.copy(alpha = toolbarAlpha),
+                        maxLines = 1,
+                        fontSize = 18.sp
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = "Назад",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    // Кнопки в toolbar — появляются плавно
+                    AnimatedVisibility(
+                        visible = true, // Всегда "видимы", но альфа = 0 когда не нужно
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Row(
+                            modifier = Modifier.alpha(toolbarAlpha)
+                        ) {
+                            IconButton(onClick = { isLiked = !isLiked }) {
+                                Icon(
+                                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = if (isLiked) "Убрать лайк" else "Понравилось",
+                                    tint = if (isLiked) Color.Red else Color.White
+                                )
+                            }
+                            IconButton(onClick = { /* поделиться */ }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Поделиться",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF7065AC).copy(alpha = 0.95f)
                 )
-            }
+            )
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -158,118 +177,29 @@ fun BookDetailScreen(onBack: () -> Unit) {
                     .verticalScroll(scrollState)
                     .padding(paddingValues)
             ) {
-                // Обложка с плавным скрытием
+                // === ОБЛОЖКА ===
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(coverHeightDp)
+                        .graphicsLayer {
+                            alpha = coverAlpha
+                            translationY = scrolledY * 0.3f
+                        }
                 ) {
                     AsyncImage(
                         model = coverUrl,
                         contentDescription = "Обложка фанфика",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .alpha(coverAlpha),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
 
-                    // Темный оверлей для лучшей читаемости текста
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.3f)
-                                    ),
-                                    startY = 0f,
-                                    endY = coverHeightPx
-                                )
-                            )
+                            .background(Color.Black.copy(alpha = 0.3f))
                     )
 
-                    // Кнопка "Назад" (только при прокрутке)
-                    if (!isToolbarVisible) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp, start = 16.dp, end = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Кнопка "Назад" как строка
-                            Surface(
-                                onClick = onBack,
-                                shape = RoundedCornerShape(20.dp),
-                                color = Color.Black.copy(alpha = 0.5f),
-                                modifier = Modifier
-                                    .alpha(coverAlpha)
-                                    .clickable { onBack() }
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                        contentDescription = "Назад",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        "Назад",
-                                        color = Color.White,
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-
-                            // Кнопки "Лайк" и "Поделиться"
-                            Row {
-                                Surface(
-                                    onClick = { isLiked = !isLiked },
-                                    shape = CircleShape,
-                                    color = Color(0xFF97A1EF).copy(alpha = 0.9f * coverAlpha),
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clickable { isLiked = !isLiked }
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                            contentDescription = if (isLiked) "Убрать лайк" else "Понравилось",
-                                            tint = if (isLiked) Color.Red else Color.White,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Surface(
-                                    onClick = { /* поделиться */ },
-                                    shape = CircleShape,
-                                    color = Color(0xFFAB98EC).copy(alpha = 0.9f * coverAlpha),
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clickable { /* поделиться */ }
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = "Поделиться",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Название работы (появляется при прокрутке)
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -279,19 +209,62 @@ fun BookDetailScreen(onBack: () -> Unit) {
                         Text(
                             text = title,
                             color = Color.White,
-                            fontSize = 28.sp,
+                            fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 4.dp)
+                            modifier = Modifier.padding(bottom = 2.dp)
                         )
                         Text(
                             text = "by $authorName",
                             color = Color.White.copy(alpha = 0.9f),
-                            fontSize = 16.sp
+                            fontSize = 15.sp
                         )
+                    }
+
+                    // Кнопки на обложке — исчезают плавно
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .alpha(coverButtonsAlpha),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            onClick = { isLiked = !isLiked },
+                            shape = CircleShape,
+                            color = Color(0xFF97A1EF).copy(alpha = 0.8f),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = if (isLiked) "Убрать лайк" else "Понравилось",
+                                    tint = if (isLiked) Color.Red else Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Surface(
+                            onClick = { /* поделиться */ },
+                            shape = CircleShape,
+                            color = Color(0xFFAB98EC).copy(alpha = 0.8f),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Поделиться",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
-                // Описание фанфика
+                // === ОСНОВНОЙ КОНТЕНТ ===
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -315,7 +288,6 @@ fun BookDetailScreen(onBack: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Кнопки "Начать читать" и "Читать потом"
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -323,9 +295,7 @@ fun BookDetailScreen(onBack: () -> Unit) {
                         Button(
                             onClick = { /* начать читать */ },
                             shape = RoundedCornerShape(20.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF97A1EF)
-                            ),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF97A1EF)),
                             modifier = Modifier.weight(0.48f)
                         ) {
                             Text("Начать читать", color = Color.White)
@@ -335,9 +305,7 @@ fun BookDetailScreen(onBack: () -> Unit) {
                             onClick = { /* прочитать позже */ },
                             shape = RoundedCornerShape(20.dp),
                             border = BorderStroke(1.dp, Color(0xFFAB98EC)),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFAB98EC)
-                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFAB98EC)),
                             modifier = Modifier.weight(0.48f)
                         ) {
                             Text("Читать потом")
@@ -346,31 +314,16 @@ fun BookDetailScreen(onBack: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Разделитель
-                    Divider(
-                        color = Color.Gray.copy(alpha = 0.3f),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    Divider(color = Color.Gray.copy(alpha = 0.3f), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Автор
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(
-                                "Автор",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                authorName,
-                                color = Color.Black,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Text("Автор", color = Color.Gray, fontSize = 14.sp)
+                            Text(authorName, color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                         }
 
                         Button(
@@ -388,10 +341,7 @@ fun BookDetailScreen(onBack: () -> Unit) {
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    if (isFollowing) "Подписан" else "Подписаться",
-                                    color = Color.White
-                                )
+                                Text(if (isFollowing) "Подписан" else "Подписаться", color = Color.White)
                             }
                         }
                     }
