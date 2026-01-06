@@ -264,7 +264,7 @@ fun BookDetailScreen(onBack: () -> Unit) {
                     }
                 }
 
-                // === ОСНОВНОЙ КОНТЕНТ ===
+                //ОСНОВНОЙ КОНТЕНТ
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
