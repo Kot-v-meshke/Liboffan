@@ -27,7 +27,8 @@ import androidx.compose.ui.unit.dp
 fun WorkItem(
     title: String,
     author: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = Modifier

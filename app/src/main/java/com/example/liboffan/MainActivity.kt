@@ -58,21 +58,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-/*
-
-// Preview
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    LiboffanTheme {
-        ProfileScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BookDetailScreenPreview() {
-    LiboffanTheme {
-        BookDetailScreen(onBack = {})
-    }
-}*/

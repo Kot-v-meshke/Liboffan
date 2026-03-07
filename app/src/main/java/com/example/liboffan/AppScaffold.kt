@@ -10,6 +10,7 @@ import com.example.liboffan.components.BottomNavigationBar
 import com.example.liboffan.screens.Screen
 import com.example.liboffan.screens.book.BookDetailScreen
 import com.example.liboffan.screens.home.HomeScreen
+import com.example.liboffan.screens.library.LibraryScreen
 import com.example.liboffan.screens.profile.ProfileScreen
 import com.example.liboffan.screens.search.SearchScreen
 
@@ -37,6 +38,7 @@ fun MainApp() {
                 }
                 currentScreen == Screen.Home -> HomeScreen { bookId -> selectedBook = bookId }
                 currentScreen == Screen.Search -> SearchScreen()
+                currentScreen == Screen.Library -> LibraryScreen { bookId -> selectedBook = bookId }
                 currentScreen == Screen.Profile -> ProfileScreen { bookId -> selectedBook = bookId }
             }
         }
