@@ -162,6 +162,8 @@ fun MainAppContent(onLogout: () -> Unit) {
                             onDrawerStateChange = { expanded -> drawerExpanded = expanded },
                             onCreateStory = { showCreateStoryScreen = true }
                         )
+
+                        Screen.Library -> TODO()
                     }
                 }
             }
