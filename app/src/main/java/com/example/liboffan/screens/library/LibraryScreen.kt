@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.liboffan.components.WorkItem
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun LibraryScreen(
@@ -73,7 +72,7 @@ fun LibraryScreen(
                 )
 
                 IconButton(
-                    onClick = { /* Создать новую коллекцию */ },
+                    onClick = {  },
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
@@ -89,7 +88,6 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Быстрые действия
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -122,7 +120,6 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Статистика
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -146,7 +143,6 @@ fun LibraryScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Коллекции пользователя
             Text(
                 text = "Мои коллекции",
                 style = MaterialTheme.typography.titleLarge.copy(color = Color.White),
@@ -168,17 +164,16 @@ fun LibraryScreen(
                 )) { collection ->
                     CollectionCard(
                         collection = collection,
-                        onClick = { /* Открыть коллекцию */ }
+                        onClick = {  }
                     )
                 }
 
-                // Кнопка создания новой коллекции
                 item {
                     OutlinedCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { /* Создать коллекцию */ }
-                            .border( // ДОБАВЬТЕ border как модификатор!
+                            .clickable { }
+                            .border(
                                 width = 1.dp,
                                 color = Color.White.copy(alpha = 0.3f),
                                 shape = RoundedCornerShape(12.dp)
@@ -188,7 +183,6 @@ fun LibraryScreen(
                             containerColor = Color.Transparent,
                             contentColor = Color.White
                         )
-                        // УБРАТЬ параметр border отсюда!
                     ) {
                         Row(
                             modifier = Modifier
@@ -221,7 +215,6 @@ fun LibraryScreen(
                     )
                 }
 
-                // Недавно добавленные работы
                 items(5) { i ->
                     WorkItem(
                         title = "Недавний фанфик $i",
