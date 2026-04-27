@@ -1,4 +1,4 @@
-package com.example.liboffan.model
+package com.example.liboffan.model.response
 
 data class AuthResponse(
     val token: String,

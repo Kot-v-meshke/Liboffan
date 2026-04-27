@@ -1,5 +1,6 @@
 package com.example.liboffan.screens.Auth
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -128,6 +129,15 @@ fun LoginScreen(
 
         Button(
             onClick = {
+                Log.d("LOGIN_DEBUG", "Кнопка 'Войти' нажата")
+                Log.d("LOGIN_DEBUG", "Email: ${email.value}, Password length: ${password.value.length}")
+
+                if (isFormValid) {
+                    Log.d("LOGIN_DEBUG", "Форма валидна → вызываем onLogin")
+                    onLogin(email.value, password.value)
+                } else {
+                    Log.d("LOGIN_DEBUG", "Форма НЕ валидна")
+                }
                 if (isFormValid) {
                     onLogin(email.value, password.value)
                 }

@@ -1,6 +1,5 @@
 package com.example.liboffan
 
-import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -20,18 +19,20 @@ import com.example.liboffan.model.LoginRequest
 import com.example.liboffan.model.RegisterRequest
 import com.example.liboffan.network.RetrofitClient
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-
+import androidx.compose.ui.platform.LocalContext
+import com.example.liboffan.screens.book.StoryScreen
+import com.example.liboffan.screens.book.ReaderScreen
 
 
 @Composable
-fun MainApp(context: Context) {
+fun MainApp() {
+
+    val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
 
     var isLoggedIn by remember { mutableStateOf(false) }
     var authScreen by remember { mutableStateOf<AuthScreen>(AuthScreen.Login) }
 
-    // Проверка сессии при старте
     LaunchedEffect(Unit) {
         if (!tokenManager.authToken.isNullOrBlank()) {
             isLoggedIn = true
@@ -73,44 +74,115 @@ fun MainApp(context: Context) {
     }
 }
 
-// Основной контент приложения
 @Composable
 fun MainAppContent(onLogout: () -> Unit) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
-    var selectedBook by remember { mutableStateOf<String?>(null) }
 
-    if (selectedBook != null) {
-        BookDetailScreen(onBack = { selectedBook = null })
-    } else {
-        Scaffold(
-            containerColor = Color.Transparent,
-            bottomBar = {
-                BottomNavigationBar(currentScreen) { screen ->
-                    currentScreen = screen
+    var selectedTreeId by remember { mutableStateOf<Long?>(null) }
+
+    var readVersionId by remember { mutableStateOf<Long?>(null) }
+
+    var detailVersionId by remember { mutableStateOf<Long?>(null) }
+
+    var showCreateStoryScreen by remember { mutableStateOf(false) }
+    var drawerExpanded by remember { mutableStateOf(false) }
+
+    when {
+        readVersionId != null && selectedTreeId != null -> {
+            ReaderScreen(
+                context = LocalContext.current,
+                versionId = readVersionId!!,
+                treeId = selectedTreeId!!,
+                onBack = { readVersionId = null },
+                onFork = { /* создать ветку */ }
+            )
+        }
+
+        selectedTreeId != null -> {
+            BookDetailScreen(
+                context = LocalContext.current,
+                treeId = selectedTreeId!!,
+                versionId = detailVersionId,
+                onReadClick = { versionId ->
+                    readVersionId = versionId
+                },
+                onBack = {
+                    selectedTreeId = null
+                    detailVersionId = null
                 }
-            }
-        ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                when (currentScreen) {
-                    Screen.Home -> HomeScreen { bookId -> selectedBook = bookId }
-                    Screen.Search -> SearchScreen()
-                    Screen.Profile -> ProfileScreen(
-                        onBookClick = { bookId -> selectedBook = bookId },
-                        onLogout = onLogout // передаём onLogout, если ProfileScreen его использует
-                    )
+            )
+        }
+
+        else -> {
+            Scaffold(
+                containerColor = Color.Transparent,
+                bottomBar = {
+                    BottomNavigationBar(currentScreen) { screen ->
+                        currentScreen = screen
+                    }
+                }
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    when (currentScreen) {
+                        Screen.Home -> HomeScreen(
+                            context = LocalContext.current,
+                            onBookClick = { treeId ->
+                                selectedTreeId = treeId
+                                detailVersionId = null
+                                readVersionId = null
+                            },
+                            onBranchClick = { versionId, treeId ->
+                                selectedTreeId = treeId
+                                detailVersionId = versionId
+                                readVersionId = null
+                            }
+                        )
+                        Screen.Search -> SearchScreen(
+                            context = LocalContext.current,
+                            onBookClick = { treeId ->
+                                selectedTreeId = treeId
+                                detailVersionId = null
+                                readVersionId = null
+                            },
+                            onBranchClick = { versionId, treeId ->
+                                selectedTreeId = treeId
+                                detailVersionId = versionId
+                                readVersionId = null
+                            }
+                        )
+                        Screen.Profile -> ProfileScreen(
+                            context = LocalContext.current,
+                            onBookClick = { treeId, versionId ->
+                                selectedTreeId = treeId
+                                detailVersionId = versionId
+                                readVersionId = null
+                            },
+                            onLogout = onLogout,
+                            drawerExpanded = drawerExpanded,
+                            onDrawerStateChange = { expanded -> drawerExpanded = expanded },
+                            onCreateStory = { showCreateStoryScreen = true }
+                        )
+                    }
                 }
             }
         }
     }
+
+    if (showCreateStoryScreen) {
+        StoryScreen(
+            onBack = { showCreateStoryScreen = false },
+            onCreateSuccess = { storyId ->
+                showCreateStoryScreen = false
+                selectedTreeId = storyId
+            }
+        )
+    }
 }
 
-// Состояния авторизации
 sealed interface AuthScreen {
     object Login : AuthScreen
     object Register : AuthScreen
 }
-
-// Вспомогательные функции (должны быть в отдельном файле, но пока здесь)
 
 private fun login(
     tokenManager: TokenManager,
