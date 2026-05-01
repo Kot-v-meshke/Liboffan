@@ -42,7 +42,7 @@ fun HomeScreen(
                 stories = response.body()!!.content
             }
         } catch (e: Exception) {
-            // Можно показать Snackbar с ошибкой
+            // todo: показать Snackbar/что-то другое с ошибкой
         } finally {
             isLoading = false
         }

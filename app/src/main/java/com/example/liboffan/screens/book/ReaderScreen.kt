@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CallSplit
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -32,7 +33,7 @@ fun ReaderScreen(
     versionId: Long,
     treeId: Long,
     onBack: () -> Unit,
-    onFork: () -> Unit
+    onFork: (Long, Long, StoryDetailDto?) -> Unit
 ) {
     val tokenManager = TokenManager(context)
     val token = tokenManager.authToken ?: ""
@@ -79,6 +80,17 @@ fun ReaderScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { onFork(treeId, versionId, story) },
+                        enabled = story != null  // Активна, когда данные загружены
+                    ) {
+                        Icon(
+                            Icons.Default.CallSplit,  // или Icons.Default.Edit
+                            contentDescription = "Создать ответвление",
+                            tint = Color.White
+                        )
+                    }
+
                     IconButton(onClick = { showSettings = true }) {
                         Icon(
                             Icons.Default.Settings,
