@@ -20,6 +20,8 @@ import com.example.liboffan.model.RegisterRequest
 import com.example.liboffan.network.RetrofitClient
 import kotlinx.coroutines.*
 import androidx.compose.ui.platform.LocalContext
+import com.example.liboffan.model.dto.StoryDetailDto
+import com.example.liboffan.screens.book.ForkStoryScreen
 import com.example.liboffan.screens.book.StoryScreen
 import com.example.liboffan.screens.book.ReaderScreen
 
@@ -79,22 +81,48 @@ fun MainAppContent(onLogout: () -> Unit) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
 
     var selectedTreeId by remember { mutableStateOf<Long?>(null) }
-
     var readVersionId by remember { mutableStateOf<Long?>(null) }
-
     var detailVersionId by remember { mutableStateOf<Long?>(null) }
 
     var showCreateStoryScreen by remember { mutableStateOf(false) }
+
+    var showForkScreen by remember { mutableStateOf(false) }
+    var forkTreeId by remember { mutableStateOf<Long?>(null) }
+    var forkParentVersionId by remember { mutableStateOf<Long?>(null) }
+    var forkPrefillData by remember { mutableStateOf<StoryDetailDto?>(null) }
+
     var drawerExpanded by remember { mutableStateOf(false) }
 
+
     when {
+        showForkScreen && forkTreeId != null && forkParentVersionId != null -> {
+            ForkStoryScreen(
+                context = LocalContext.current,
+                treeId = forkTreeId!!,
+                parentVersionId = forkParentVersionId!!,
+                prefillData = forkPrefillData,
+                onBack = {
+                    showForkScreen = false
+                },
+                onForkSuccess = { newVersionId ->
+                    showForkScreen = false
+                    selectedTreeId = forkTreeId
+                    readVersionId = newVersionId
+                }
+            )
+        }
         readVersionId != null && selectedTreeId != null -> {
             ReaderScreen(
                 context = LocalContext.current,
                 versionId = readVersionId!!,
                 treeId = selectedTreeId!!,
                 onBack = { readVersionId = null },
-                onFork = { /* создать ветку */ }
+                onFork = { treeId, versionId, story ->
+                    forkTreeId = treeId
+                    forkParentVersionId = versionId
+                    forkPrefillData = story
+                    showForkScreen = true
+                }
             )
         }
 
@@ -162,8 +190,6 @@ fun MainAppContent(onLogout: () -> Unit) {
                             onDrawerStateChange = { expanded -> drawerExpanded = expanded },
                             onCreateStory = { showCreateStoryScreen = true }
                         )
-
-                        Screen.Library -> TODO()
                     }
                 }
             }

@@ -358,11 +358,9 @@ fun ProfileScreen(
                 }
 
                 val menuItems = listOf(
-                    Pair(Icons.Default.Person, "Профиль"),
                     Pair(Icons.Default.Settings, "Настройки"),
                     Pair(Icons.Default.Help, "Помощь"),
                     Pair(Icons.Default.Info, "О приложении"),
-                    Pair(Icons.Default.Star, "Избранное"),
                     Pair(Icons.Default.History, "История"),
                 )
 

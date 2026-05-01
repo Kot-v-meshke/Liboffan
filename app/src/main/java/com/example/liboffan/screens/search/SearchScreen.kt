@@ -363,7 +363,8 @@ fun SearchScreen(
                 results.forEach { item ->
                     StoryItemCard(
                         story = item,
-                        onClick = { onBookClick(item.id) }
+                        onClick = { onBookClick(item.id) },
+                        onBranchClick = onBranchClick
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }

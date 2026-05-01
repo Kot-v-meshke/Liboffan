@@ -6,6 +6,7 @@ import com.example.liboffan.model.StoryResponse
 import com.example.liboffan.model.TagItem
 import com.example.liboffan.model.dto.StoryDetailDto
 import com.example.liboffan.model.request.CreateStoryRequest
+import com.example.liboffan.model.request.ForkStoryRequest
 import com.example.liboffan.model.request.LibraryUpdateRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -68,5 +69,12 @@ interface StoryService {
     suspend fun createStory(
         @Header("Authorization") authHeader: String,
         @Body request: CreateStoryRequest
+    ): Response<StoryDetailDto>
+
+    @POST("/api/stories/{treeId}/fork")
+    suspend fun forkStory(
+        @Path("treeId") treeId: Long,
+        @Header("Authorization") authHeader: String,
+        @Body request: ForkStoryRequest
     ): Response<StoryDetailDto>
 }
